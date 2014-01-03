@@ -1,5 +1,11 @@
 # History files
 .Rhistory
+*~
 
 # Example code in package build process
 *-Ex.R
+
+# Builds
+*.tar.gz
+pkg.Rcheck
+*.Rout
