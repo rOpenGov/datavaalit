@@ -1,0 +1,36 @@
+### Helsingin Sanomien presidentinvaalien vaalikonedata 2012
+
+vuoden 2012 Presidentinvaalien tulosten haku R:llä, julkaistu HS Next -blogissa ([1.kierros](http://blogit.hs.fi/hsnext/hs-julkaisee-presidentinvaalien-tuloksen-avoimena-tietona) ja [2. kierros](http://blogit.hs.fi/hsnext/presidentinvaalien-toisen-kierroksen-tulos-avoimena-datana)):
+
+```{r vaalit-3, eval=FALSE}
+# To install sorvi library, see:
+# http://louhos.github.com/sorvi/asennus.html
+library(sorvi)
+votes <- GetElectionResultsPresidentti2012(election.round=2, level="municipalities")
+```
+
+Hae Helsingin Sanomien [Presidentti2012 -vaalikoneen](http://www.vaalikone.fi/presidentti2012/) datoja,  (vaatii henkilökohtaisen API-avaimen, katso ohjeet [täältä](http://blogit.hs.fi/hsnext/helsingin-sanomat-julkaisee-vaalikoneen-tiedot-avoimena-rajapintana)):
+
+```{r vaalit-4, eval=FALSE}
+library(sorvi)
+pressa <- GetPresidentti2012("useranswers", API="XXX", filter="timerange:2011-12-10")
+```
+
+### Käyttöesimerkkejä
+
+Esimerkkejä HS:n vaalikonedatan analysoinnista R-kielellä:
+
+ * [HS:n vaalikonedatan analyysiä R-kielellä](https://louhos.wordpress.com/2012/02/05/helsingin-sanomien-avoin-vaalikonedata-osa2/)
+ * [Kenesta seuraava presidentti? Ennusta itse HS:n vaalikonedatan avulla](https://louhos.wordpress.com/2012/01/06/kenesta-seuraava-presidentti-ennusta-itse-hsn-vaalikonedatan-avulla/)
+ * [Vaalitulosten vertailua vuorovaikutteisena visualisaationa](https://louhos.wordpress.com/2012/02/07/vaalitulosten-vertailua-vuorovaikutteisena-visualisaationa/)
+ * [Pekka vs Sauli pääkaupunkiseudulla](https://louhos.wordpress.com/2012/02/05/pekka-vs-sauli-paakaupunkiseudulla/)
+
+### Versiotiedot
+
+Tämä esimerkki on toteutettu seuraavin versiotiedoin:
+ 
+```{r versiotiedot}
+sessionInfo()
+```
+
+

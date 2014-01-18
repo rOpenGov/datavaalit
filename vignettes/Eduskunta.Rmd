@@ -1,0 +1,61 @@
+## Eduskunnan äänestysdata
+
+Esimerkkejä eduskunnan äänestysten hakemiseen [biomi.org](http://biomi.org/eduskunta/eduskunta.html):in rajapinnalta. 
+
+Hae haluamasi edustajan äänestyksiä:
+
+```{r eduskunta-3, message=FALSE, warning=FALSE}
+library(sorvi)
+paavo <- GetEdustajanAanestykset('Lipponen Paavo')
+head(paavo)
+```
+
+Äänestysten tunnisteet ovat muotoa a{äänestyksen numero}_{istunnon numero}-{vuosi}. Jos tiedossa on äänestyksen tunnus, niin tiedot edustajittain löytyvät seuraavasti. Otetaan esimerkiksi [Lex Karpela-äänestys](http://www.biomi.org/tools/eduskunta/aanestys/a1_100-2005) tekijänoikeuslain muuttamiseksi (äänestys 1, istunto 100, vuosi 2005): 
+
+```{r eduskunta-2, message=FALSE, warning=FALSE}
+#aanestysnro <- 'a3_80-2011'
+aanestysnro <- 'a1_100-2005'
+aanestys <- GetEdustajaData(aanestysnro)
+```
+
+
+Saatavilla olevat äänestysten tunnukset voi listata seuraavasti:
+
+```{r eduskunta-1, eval=FALSE}
+aanestykset <- GetParliamentVotes()
+```
+
+
+Puoluekohtainen taulukko äänestyskäyttäytymisestä annetussa äänestyksessä:
+
+```{r eduskunta-4, message=FALSE, warning=FALSE}
+table(aanestys$valinta, aanestys$puolue)
+```
+
+Visualisoi puolueiden kannat äänestyksessä. Voit kokeilla samaa esimerkkiä eri äänestyksille vuorovaikutteisesti [Opasnetissä](http://fi.opasnet.org/fi/Eduskunta):
+
+```{r eduskunta-visu, message=FALSE, warning=FALSE, fig.width=16, fig.height=8}
+library(ggplot2)
+theme_set(theme_bw(40))
+ggplot(aanestys, aes(x = puolue, weight = 1, fill = valinta)) + 
+	geom_bar(position = "stack") + 
+		ggtitle(paste("Äänestystulos äänestyksessä", aanestysnro)) +
+		scale_y_continuous("Äänimäärä") +
+		scale_x_discrete("Puolue")
+```
+
+
+
+## Tunnettuja ongelmia:
+- Ääkköset toimivat kehnosti
+
+
+### Versiotiedot
+
+Tämä esimerkki on toteutettu seuraavin versiotiedoin:
+ 
+```{r versiotiedot}
+sessionInfo()
+```
+
+

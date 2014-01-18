@@ -1,0 +1,184 @@
+```{r datavaalit-1, eval=TRUE, message=FALSE, warning=FALSE}
+# Hae data puolueiden kunnallisvaaliehdokkaiden aktiivisuudesta
+# sosiaalisessa mediassa Datavaalit-palvelimelta
+some <- read.csv("http://www.datavaalit.fi/storage/some-updates-stats-2012-10-26.csv", sep = ",")
+names(some) <- c("puolue", "media", "dat")
+some$media <- factor(gsub("FB", "Facebook", gsub("TW", "Twitter", some$media)))
+some.full <- some
+```
+
+#tsome <- read.csv("datavaalit/data/some-updates.csv", sep=";", header=FALSE)
+#download.file("", destfile = "some-updates-2013-01-22.csv.bz2")
+system("bunzip2 some-updates-2013-01-22.csv.bz2")
+
+temp <- tempfile()
+url <- "http://www.datavaalit.fi/storage/some-updates-2013-01-22.csv.bz2"
+download.file(url, temp)
+tsome <- read.csv(bzfile(temp, "some-updates-2013-01-22.csv"), sep=";", header=FALSE)
+unlink(temp)
+
+temp <- tempfile()
+download.file("http://www.datavaalit.fi/storage/some-updates-2012-10-26.zip", temp)
+tsome <- read.csv(unz(temp, "some-updates.csv"), sep=";", header=FALSE)
+unlink(temp)
+names(tsome) <- c("nimi", "puolue", "kunta", "sukupuoli", "media", "aika", "X")
+
+### puoluestatistiikkaa
+
+```{r datavaalit-109, eval=TRUE, fig.width=8, fig.height=8, message=FALSE, warning=FALSE}    
+party_stats  <- ddply(tsome, c(.(aika), .(puolue)), summarise,
+                      lkm=length(nimi),
+                      ehd=unlist(isot[puolue][1]))
+party_stats$lkmfr <- party_stats$lkm / party_stats$ehd
+
+p2 <- ggplot(party_stats, aes(x = aika, y = lkmfr, group = puolue)) 
+p2 <- p2 + geom_line(aes(colour = puolue))
+print(p2)
+```
+
+### Facebook updates 
+
+```{r datavaalit-12, eval=TRUE, fig.width=8, fig.height=8, message=FALSE, warning=FALSE}    
+party_stats_fb  <- ddply(tsome.fb, c(.(aika), .(puolue)), summarise,
+                         lkm=length(nimi),
+                         ehd=unlist(isot[puolue][1]))
+party_stats_fb$lkmfr <- party_stats_fb$lkm / party_stats_fb$ehd
+
+p <- ggplot(party_stats_fb, aes(x = aika, y=lkmfr)) 
+p <- p + geom_bar(fill="#3B5998") + ylab("lkm") + ggtitle("Facebook päivitykset")
+p <- p + facet_grid(puolue ~ .) 
+#p + facet_grid(puolue ~ ., scales="free_y")
+print(p)
+```
+
+
+### Twitter updates 
+```{r datavaalit-121, eval=TRUE, fig.width=8, fig.height=8, message=FALSE, warning=FALSE}    
+
+party_stats_tw  <- ddply(tsome.tw, c(.(aika), .(puolue)), summarise,
+                         lkm=length(nimi),
+                         ehd=unlist(isot[puolue][1]))
+
+party_stats_tw$lkmfr <- party_stats_tw$lkm / party_stats_tw$ehd
+
+p <- ggplot(party_stats_tw, aes(x = aika, y=lkmfr)) 
+p <- p + geom_bar(fill="#00ACED") + ylab("lkm") + facet_grid(puolue ~ .) + ggtitle("Twitter päivitykset")
+print(p)
+```
+
+
+### Puolueiden päivitykset aikajanalla
+
+```{r some3, eval=TRUE, message=FALSE, warning=FALSE, fig.width=20, fig.height=10}
+
+pics <- list()
+
+for (me in c("Twitter", "Facebook")) {
+
+  df <- data.frame(list(count = table(subset(tsome, media == me)$puolue)))
+  df <- df[order(df$count.Freq),]
+  tops <- names(which(table(tsome$puolue) > 1000))
+  stsome$puolue <- factor(df$puolue, level = names(sort(table(df$puolue))))
+
+  tsome$pvm <- sapply(strsplit(as.character(tsome$aika), " "), function (x) {x[[1]]})
+  tabs <- subset(tsome, media == me & puolue %in% tops)
+  tabs$puolue <- droplevels(tabs$puolue)
+
+  # Puolue-päivämäärä - päivitysmatriisi
+  p2d <- sapply(split(tabs, tabs$pvm), function (x) {table(x$puolue)})
+
+  library(reshape)
+  m <- melt(p2d)
+  names(m) <- c("Puolue", "Pvm", "Updates")
+  m$Pvm <- as.Date(m$Pvm)
+  p <- ggplot(m, aes(x = Pvm, y = Updates, group = Puolue, colour = Puolue, linetype = Puolue)) + geom_line() + ggtitle(me) + xlab("") 
+  p <- p + scale_x_date() 
+
+  pics[[me]] <- p
+
+}
+
+grid.arrange(pics[["Twitter"]], pics[["Facebook"]], nrow = 1)
+```
+
+
+
+
+
+```{r datavaalit-7, eval=TRUE, fig.width=8, fig.height=8, message=FALSE, warning=FALSE}      
+p <- ggplot(csome, aes(x=log10(FBfr), y=log10(TWfr), label=puolue)) 
+p <- p + geom_text(size = 5) + xlab("log10(Facebook-päivitysten määrä)") + 
+    xlim(c(-1, 2)) + ylim(c(-1, 2)) +
+    ylab("log10(Twitter-päivitysten määrä)") +
+    ggtitle("Normalisoidut some-päivitysten määrät")
+print(p)
+```
+
+# All social media updates
+p <- ggplot(tsome, aes(x = aika)) 
+p <- p + geom_histogram(binaxis = "y", binwidth=0.1) + ylab("lkm") +
+    facet_grid(puolue ~ .) + ggtitle("Kaikki some-päivitykset")
+print(p)
+
+
+## Facebook- ja Twitter-aktiivisuuden vertailu
+
+Vertaile ehdokkaiden Facebook- ja Twitter-aktiivisuutta puolueiden välillä:
+
+```{r datavaalit-4, eval=TRUE, fig.width=8, fig.height=8, message=FALSE, warning=FALSE}      
+
+puolueet <- as.character(some.full$puolue)
+fb <- subset(some.full, media == "Facebook")
+rownames(fb) <- as.character(fb$puolue)
+tw <- subset(some.full, media == "Twitter")
+rownames(tw) <- as.character(tw$puolue)
+df <- data.frame(list(puolue = puolueet, Facebook = fb[puolueet, "dat.normalized"], Twitter = tw[puolueet, "dat.normalized"]))
+df <- df[apply(df, 1, function (x) {!any(is.na(x))}),]
+ggplot(df, aes(x = Facebook, y = Twitter, label = puolue)) + geom_text(size = 3) + scale_x_continuous(lim = c(-2,max(df[, c("Facebook")]) + 2)) + scale_y_continuous(lim = c(-1,max(df[, c("Twitter")]))) + ggtitle("Facebook- ja Twitter-aktiivisuuden vertailua") + theme(axis.title.x = element_text(size=18), axis.title.y = element_text(size=18), title = element_text(size=18))
+```
+
+### All social media updates
+
+```{r datavaalit-11, eval=TRUE, fig.width=8, fig.height=8, message=FALSE, warning=FALSE}    
+p <- ggplot(party_stats, aes(x = aika, y=lkmfr)) 
+p <- p + geom_bar() + ylab("lkm") + ggtitle("Kaikki some-päivitykset")
+p <- p + facet_grid(puolue ~ .) 
+#p + facet_grid(puolue ~ ., scales="free_y")
+print(p)
+```
+
+```{r datavaalit-5, eval=TRUE, fig.width=8, fig.height=8, message=FALSE, warning=FALSE}      
+library(ggplot2)
+library(reshape)
+library(plyr)
+library(ggplot2)
+
+isot <- list('KD'=1870, 'KESK'=8401,'KOK'=6874, 'PIR'=121, 'PS'=4394, 
+             'RKP'=1350, 'SDP'=6987, 'SKP'=304, 'VAS'=3506,'VIHR'=2298)
+
+some <- subset(some, puolue %in% names(isot))
+
+csome <- cast(some, puolue~media)
+csome$TW[which(is.na(csome$TW))]  <- 0
+csome$FB[which(is.na(csome$FB))]  <- 0
+csome$puolue <- droplevels(csome$puolue)
+
+# NOTE: order of isot matters!!!
+csome$TWfr <- csome$TW / unlist(isot[csome$puolue])
+csome$FBfr <- csome$FB / unlist(isot[csome$puolue])
+
+# Customize ggplot2 theme
+theme_custom <- ggplot2::theme_bw(20)
+theme_custom$axis.title.x <- element_text(size=18)
+theme_custom$axis.text.x <- element_text(angle=90, vjust=0.5, size=12)
+theme_custom$axis.title.y <- element_text(angle=90, size=18)
+theme_custom$axis.text.y <- element_text(angle=90, size=12)
+theme_custom$strip.text.y <- element_text(size=12, face="bold")
+theme_set(theme_custom)
+
+p <- ggplot(csome, aes(x=FB, y=TW, label=puolue)) 
+p <- p + geom_text(size = 5) + xlab("Facebook-päivitysten määrä") + 
+    ylab("Twitter-päivitysten määrä") + geom_smooth(method = lm)
+print(p)
+```
+

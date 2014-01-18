@@ -1,0 +1,84 @@
+
+## Kunnallisvaalit 2012
+
+Seuraavat esimerkit hakevat R-ympäristössä vaalidataa ehdokkaista ja puolueista [Oikeusministeriön palvelimelta](http://192.49.229.35/K2012/s/ehd_listat/kokomaa.htm#ladattavat).
+
+### Kunnallisvaalit 2012: ehdokasdata
+
+Lähdekoodiesimerkit R-kielelle 2012 kunnallisvaalien ehdokasdatan lukemiseen. Lähde: [Louhos-blogi](http://louhos.wordpress.com/2012/10/05/kunnallisvaalien-vertailukelpoiset-ehdokasdatat-csv-taulukkoina-2004-2008-2012/):
+
+```{r vaalit-candidates, eval=FALSE}
+# sorvi installation: http://louhos.github.com/sorvi/asennus.html
+library(sorvi) 
+
+# Get all candidate data across the whole country  
+candidates.all <- ReadAllCandidates()
+
+# Get candidate data for election district 3 (Varsinais-Suomen vaalipiiri)
+candidates.3 <- ReadElectionData("candidates", district.id = 3)  
+candidates.3 <- ReadElectionData("candidates", district.id = "Varsinais-Suomen vaalipiiri")  
+
+# Dumping data into CSV file
+write.table(candidates.all, "MoJ_candidates_finland.csv", 
+	    sep=";", quote=FALSE, fileEncoding="iso-8859-1", row.names = FALSE)
+```
+
+### Kunnallisvaalit 2012: puoluedata
+
+```{r vaalit-parties, eval=FALSE}
+# sorvi installation: http://louhos.github.com/sorvi/asennus.html
+library(sorvi) 
+
+# Get all party data across the whole country  
+parties.all <- ReadAllParties()
+
+# Get party data for election district 3 (Varsinais-Suomen vaalipiiri)
+parties.3 <- ReadElectionData("parties", district.id = 3)  
+```
+
+
+## Kunnallisvaalien ehdokastiedot (2004-2012)
+
+Hae Tilastokeskuksen data kunnallisvaalien ehdokkaista äänestysalueen tarkkuudella. Lähde: [Louhos-blogi](http://louhos.wordpress.com/2012/10/05/kunnallisvaalien-vertailukelpoiset-ehdokasdatat-csv-taulukkoina-2004-2008-2012/):
+
+```{r vaalit-0408, eval=FALSE}
+# sorvi installation: http://louhos.github.com/sorvi/asennus.html
+library(sorvi)
+
+# List all election districts to consider 
+election.districts <- setdiff(1:15, 5) # There is no district 5
+
+# Get the data for each district
+year <- 2004 # Options: 2004 / 2008 / 2012
+tabs <- list()
+for (id in election.districts) {
+  tabs[[as.character(id)]] <- GetElectedCandidates(year, "municipal", id) 
+}
+
+# Combine the data sets into one table
+candidates <- do.call(rbind, tabs)
+```
+
+
+## Tilastokeskus: vaalipiirit
+
+Suomen vaalipiirien haku [Tilastokeskukselta](http://www.stat.fi/meta/luokitukset/vaalipiiri/001-2012/luokitusavain_kunta.html):
+
+```{r vaalit-2, message=FALSE, warning=FALSE}
+library(sorvi)
+vaalipiiri <- GetVaalipiiri()
+head(vaalipiiri)
+```
+
+
+### Versiotiedot
+
+Tämä esimerkki on toteutettu seuraavin versiotiedoin:
+ 
+```{r versiotiedot}
+sessionInfo()
+```
+
+
+
+
